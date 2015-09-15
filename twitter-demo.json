@@ -39,7 +39,7 @@
     {
       "title": "Add the downloaded jars as deps for our spark context (must be done before any other spark or pyspark actions) --restart interpreter, if needed",
       "text": "%dep\nz.load(\"spark-streaming-twitter_2.10-1.4.1.jar\")\nz.load(\"lib/twitter4j-core-3.0.3.jar\")\nz.load(\"lib/twitter4j-media-support-3.0.3.jar\")\nz.load(\"lib/twitter4j-async-3.0.3.jar\")\nz.load(\"lib/twitter4j-examples-3.0.3.jar\")\nz.load(\"lib/twitter4j-stream-3.0.3.jar\")\n",
-      "dateUpdated": "Sep 15, 2015 8:15:52 PM",
+      "dateUpdated": "Sep 15, 2015 9:17:56 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -60,15 +60,12 @@
       },
       "jobName": "paragraph_1442335035212_-856768884",
       "id": "20150915-163715_2081853518",
-      "result": {
-        "code": "SUCCESS",
-        "type": "TEXT",
-        "msg": "res0: org.apache.zeppelin.spark.dep.Dependency \u003d org.apache.zeppelin.spark.dep.Dependency@4d1a6209\n"
-      },
+      "result": "org.apache.zeppelin.interpreter.InterpreterException: org.apache.thrift.transport.TTransportException: java.net.ConnectException: Connection refused",
       "dateCreated": "Sep 15, 2015 4:37:15 PM",
-      "dateStarted": "Sep 15, 2015 8:15:52 PM",
-      "dateFinished": "Sep 15, 2015 8:16:04 PM",
-      "status": "FINISHED",
+      "dateStarted": "Sep 15, 2015 9:17:56 PM",
+      "dateFinished": "Sep 15, 2015 9:18:26 PM",
+      "status": "ERROR",
+      "errorMessage": "java.net.ConnectException: Connection refused\n\tat java.net.PlainSocketImpl.socketConnect(Native Method)\n\tat java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:339)\n\tat java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:200)\n\tat java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:182)\n\tat java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)\n\tat java.net.Socket.connect(Socket.java:579)\n\tat org.apache.thrift.transport.TSocket.open(TSocket.java:182)\n\tat org.apache.zeppelin.interpreter.remote.ClientFactory.create(ClientFactory.java:51)\n\tat org.apache.zeppelin.interpreter.remote.ClientFactory.create(ClientFactory.java:37)\n\tat org.apache.commons.pool2.BasePooledObjectFactory.makeObject(BasePooledObjectFactory.java:60)\n\tat org.apache.commons.pool2.impl.GenericObjectPool.create(GenericObjectPool.java:861)\n\tat org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:435)\n\tat org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:363)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess.getClient(RemoteInterpreterProcess.java:139)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.init(RemoteInterpreter.java:137)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.getFormType(RemoteInterpreter.java:257)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.getFormType(LazyOpenInterpreter.java:104)\n\tat org.apache.zeppelin.notebook.Paragraph.jobRun(Paragraph.java:197)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:170)\n\tat org.apache.zeppelin.scheduler.RemoteScheduler$JobRunner.run(RemoteScheduler.java:304)\n\tat java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:471)\n\tat java.util.concurrent.FutureTask.run(FutureTask.java:262)\n\tat java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)\n\tat java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)\n\tat java.lang.Thread.run(Thread.java:745)\n",
       "progressUpdateIntervalMs": 500
     },
     {
@@ -106,8 +103,8 @@
     },
     {
       "title": "Small class that sets up the streaming data from twitter",
-      "text": "import org.apache.spark.streaming._\nimport org.apache.spark.streaming.twitter._\nimport org.apache.spark.storage.StorageLevel\nimport scala.io.Source\nimport scala.collection.mutable.HashMap\nimport java.io.File\nimport org.apache.log4j.Logger\nimport org.apache.log4j.Level\nimport sys.process.stringSeqToProcess\n\n/** Configures the Oauth Credentials for accessing Twitter */\ndef configureTwitterCredentials(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String) {\n  val configs \u003d new HashMap[String, String] ++\u003d Seq(\n    \"apiKey\" -\u003e apiKey, \"apiSecret\" -\u003e apiSecret, \"accessToken\" -\u003e accessToken, \"accessTokenSecret\" -\u003e accessTokenSecret)\n  println(\"Configuring Twitter OAuth\")\n  configs.foreach{ case(key, value) \u003d\u003e\n    if (value.trim.isEmpty) {\n      throw new Exception(\"Error setting authentication - value for \" + key + \" not set\")\n    }\n    val fullKey \u003d \"twitter4j.oauth.\" + key.replace(\"api\", \"consumer\")\n    System.setProperty(fullKey, value.trim)\n    println(\"\\tProperty \" + fullKey + \" set as [\" + value.trim + \"]\")\n  }\n  println()\n}\n\n// Configure Twitter credentials\nval apiKey \u003d \"8i2ZrUPfoG1ZnU2uuyvcZdV7i\"\nval apiSecret \u003d \"iBPRby7ODZucGivsmnaPRWHFx0J3kPd4uQrpwWbRiHNPZfrRbk\"\nval accessToken \u003d \"28580845-8z90p66gKcgyP79NR1MzcJ7ZaLVVH2gpMwWCQaWHl\"\nval accessTokenSecret \u003d \"drdM8I28P91GdQ5TkXFPSaEIom9I8FLZ8VlnHfTdHO3tB\"\nconfigureTwitterCredentials(apiKey, apiSecret, accessToken, accessTokenSecret)\n\nimport org.apache.spark.streaming.twitter._\nval ssc \u003d new StreamingContext(sc, Seconds(2))\nval tweets \u003d TwitterUtils.createStream(ssc, None)\nval twt \u003d tweets.window(Seconds(600))\n\ncase class Tweet(createdAt:Long, text:String)\ntwt.map(status\u003d\u003e\n  Tweet(status.getCreatedAt().getTime()/1000, status.getText())\n).foreachRDD(rdd\u003d\u003e\n  rdd.toDF().registerTempTable(\"tweets\")\n)\n\ntwt.print\n\nssc.start()\n",
-      "dateUpdated": "Sep 15, 2015 8:17:07 PM",
+      "text": "import org.apache.spark.streaming._\nimport org.apache.spark.streaming.twitter._\nimport org.apache.spark.storage.StorageLevel\nimport scala.io.Source\nimport scala.collection.mutable.HashMap\nimport java.io.File\nimport org.apache.log4j.Logger\nimport org.apache.log4j.Level\nimport sys.process.stringSeqToProcess\n\n/** Configures the Oauth Credentials for accessing Twitter */\ndef configureTwitterCredentials(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String) {\n  val configs \u003d new HashMap[String, String] ++\u003d Seq(\n    \"apiKey\" -\u003e apiKey, \"apiSecret\" -\u003e apiSecret, \"accessToken\" -\u003e accessToken, \"accessTokenSecret\" -\u003e accessTokenSecret)\n  println(\"Configuring Twitter OAuth\")\n  configs.foreach{ case(key, value) \u003d\u003e\n    if (value.trim.isEmpty) {\n      throw new Exception(\"Error setting authentication - value for \" + key + \" not set\")\n    }\n    val fullKey \u003d \"twitter4j.oauth.\" + key.replace(\"api\", \"consumer\")\n    System.setProperty(fullKey, value.trim)\n    println(\"\\tProperty \" + fullKey + \" set as [\" + value.trim + \"]\")\n  }\n  println()\n}\n\n// Configure Twitter credentials\nval apiKey \u003d \"8i2ZrUPfoG1ZnU2uuyvcZdV7i\"\nval apiSecret \u003d \"iBPRby7ODZucGivsmnaPRWHFx0J3kPd4uQrpwWbRiHNPZfrRbk\"\nval accessToken \u003d \"28580845-8z90p66gKcgyP79NR1MzcJ7ZaLVVH2gpMwWCQaWHl\"\nval accessTokenSecret \u003d \"drdM8I28P91GdQ5TkXFPSaEIom9I8FLZ8VlnHfTdHO3tB\"\nconfigureTwitterCredentials(apiKey, apiSecret, accessToken, accessTokenSecret)\n\nimport org.apache.spark.streaming.twitter._\nval ssc \u003d new StreamingContext(sc, Seconds(2))\nval tweets \u003d TwitterUtils.createStream(ssc, None)\nval twt \u003d tweets.window(Seconds(300))\n\ncase class Tweet(createdAt:Long, text:String)\ntwt.map(status\u003d\u003e\n  Tweet(status.getCreatedAt().getTime()/1000, status.getText())\n).foreachRDD(rdd\u003d\u003e\n  rdd.toDF().registerTempTable(\"tweets\")\n)\n\ntwt.print\n\nssc.start()\n",
+      "dateUpdated": "Sep 15, 2015 9:15:44 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -130,15 +127,12 @@
       },
       "jobName": "paragraph_1442334973495_1197497439",
       "id": "20150915-163613_1273032512",
-      "result": {
-        "code": "SUCCESS",
-        "type": "TEXT",
-        "msg": "import org.apache.spark.streaming._\nimport org.apache.spark.streaming.twitter._\nimport org.apache.spark.storage.StorageLevel\nimport scala.io.Source\nimport scala.collection.mutable.HashMap\nimport java.io.File\nimport org.apache.log4j.Logger\nimport org.apache.log4j.Level\nimport sys.process.stringSeqToProcess\nconfigureTwitterCredentials: (apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)Unit\napiKey: String \u003d 8i2ZrUPfoG1ZnU2uuyvcZdV7i\napiSecret: String \u003d iBPRby7ODZucGivsmnaPRWHFx0J3kPd4uQrpwWbRiHNPZfrRbk\naccessToken: String \u003d 28580845-8z90p66gKcgyP79NR1MzcJ7ZaLVVH2gpMwWCQaWHl\naccessTokenSecret: String \u003d drdM8I28P91GdQ5TkXFPSaEIom9I8FLZ8VlnHfTdHO3tB\nConfiguring Twitter OAuth\n\tProperty twitter4j.oauth.consumerKey set as [8i2ZrUPfoG1ZnU2uuyvcZdV7i]\n\tProperty twitter4j.oauth.accessToken set as [28580845-8z90p66gKcgyP79NR1MzcJ7ZaLVVH2gpMwWCQaWHl]\n\tProperty twitter4j.oauth.consumerSecret set as [iBPRby7ODZucGivsmnaPRWHFx0J3kPd4uQrpwWbRiHNPZfrRbk]\n\tProperty twitter4j.oauth.accessTokenSecret set as [drdM8I28P91GdQ5TkXFPSaEIom9I8FLZ8VlnHfTdHO3tB]\n\nimport org.apache.spark.streaming.twitter._\nssc: org.apache.spark.streaming.StreamingContext \u003d org.apache.spark.streaming.StreamingContext@50be145a\ntweets: org.apache.spark.streaming.dstream.ReceiverInputDStream[twitter4j.Status] \u003d org.apache.spark.streaming.twitter.TwitterInputDStream@2429a105\ntwt: org.apache.spark.streaming.dstream.DStream[twitter4j.Status] \u003d org.apache.spark.streaming.dstream.WindowedDStream@65c2a8eb\ndefined class Tweet\n"
-      },
+      "result": "org.apache.zeppelin.interpreter.InterpreterException: org.apache.thrift.transport.TTransportException: java.net.ConnectException: Connection refused",
       "dateCreated": "Sep 15, 2015 4:36:13 PM",
-      "dateStarted": "Sep 15, 2015 8:17:07 PM",
-      "dateFinished": "Sep 15, 2015 8:18:05 PM",
-      "status": "FINISHED",
+      "dateStarted": "Sep 15, 2015 9:15:44 PM",
+      "dateFinished": "Sep 15, 2015 9:15:44 PM",
+      "status": "ERROR",
+      "errorMessage": "java.net.ConnectException: Connection refused\n\tat java.net.PlainSocketImpl.socketConnect(Native Method)\n\tat java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:339)\n\tat java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:200)\n\tat java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:182)\n\tat java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)\n\tat java.net.Socket.connect(Socket.java:579)\n\tat org.apache.thrift.transport.TSocket.open(TSocket.java:182)\n\tat org.apache.zeppelin.interpreter.remote.ClientFactory.create(ClientFactory.java:51)\n\tat org.apache.zeppelin.interpreter.remote.ClientFactory.create(ClientFactory.java:37)\n\tat org.apache.commons.pool2.BasePooledObjectFactory.makeObject(BasePooledObjectFactory.java:60)\n\tat org.apache.commons.pool2.impl.GenericObjectPool.create(GenericObjectPool.java:861)\n\tat org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:435)\n\tat org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:363)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess.getClient(RemoteInterpreterProcess.java:139)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.getFormType(RemoteInterpreter.java:266)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.getFormType(LazyOpenInterpreter.java:104)\n\tat org.apache.zeppelin.notebook.Paragraph.jobRun(Paragraph.java:197)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:170)\n\tat org.apache.zeppelin.scheduler.RemoteScheduler$JobRunner.run(RemoteScheduler.java:304)\n\tat java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:471)\n\tat java.util.concurrent.FutureTask.run(FutureTask.java:262)\n\tat java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)\n\tat java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)\n\tat java.lang.Thread.run(Thread.java:745)\n",
       "progressUpdateIntervalMs": 500
     },
     {
@@ -259,8 +253,8 @@
       "progressUpdateIntervalMs": 500
     },
     {
-      "text": "%sql\nselect count(*) from tweets ",
-      "dateUpdated": "Sep 15, 2015 8:51:57 PM",
+      "text": "%sql\nselect count(*) Total_tweets from tweets ",
+      "dateUpdated": "Sep 15, 2015 9:12:26 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -269,7 +263,7 @@
           "optionOpen": false,
           "keys": [
             {
-              "name": "_c0",
+              "name": "total",
               "index": 0.0,
               "aggr": "sum"
             }
@@ -278,7 +272,7 @@
           "groups": [],
           "scatter": {
             "xAxis": {
-              "name": "_c0",
+              "name": "total",
               "index": 0.0,
               "aggr": "sum"
             }
@@ -295,17 +289,17 @@
       "result": {
         "code": "SUCCESS",
         "type": "TABLE",
-        "msg": "_c0\n27916\n"
+        "msg": "Total_tweets\n27126\n"
       },
       "dateCreated": "Sep 15, 2015 7:37:53 PM",
-      "dateStarted": "Sep 15, 2015 8:51:57 PM",
-      "dateFinished": "Sep 15, 2015 8:52:13 PM",
+      "dateStarted": "Sep 15, 2015 9:12:26 PM",
+      "dateFinished": "Sep 15, 2015 9:12:40 PM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%sql select  sentiment(text), count(1)\nfrom tweets \nwhere upper(text) like upper(\u0027%${Search\u003dTrump}%\u0027) group by sentiment(text)\n",
-      "dateUpdated": "Sep 15, 2015 8:21:14 PM",
+      "dateUpdated": "Sep 15, 2015 9:13:20 PM",
       "config": {
         "colWidth": 3.0,
         "graph": {
@@ -373,8 +367,8 @@
     },
     {
       "title": "Count retweets per second over our window",
-      "text": "%sql select createdAt, count(1) from tweets  where text like \u0027RT%\u0027 group by createdAt order by createdAt\n",
-      "dateUpdated": "Sep 15, 2015 7:42:41 PM",
+      "text": "%sql select createdAt, count(1) retweets from tweets  where text like \u0027RT%\u0027 group by createdAt order by createdAt\n",
+      "dateUpdated": "Sep 15, 2015 9:10:36 PM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -390,7 +384,7 @@
           ],
           "values": [
             {
-              "name": "_c1",
+              "name": "value",
               "index": 1.0,
               "aggr": "sum"
             }
@@ -400,11 +394,6 @@
             "xAxis": {
               "name": "createdAt",
               "index": 0.0,
-              "aggr": "sum"
-            },
-            "yAxis": {
-              "name": "_c1",
-              "index": 1.0,
               "aggr": "sum"
             }
           }
@@ -421,11 +410,11 @@
       "result": {
         "code": "SUCCESS",
         "type": "TABLE",
-        "msg": "createdAt\t_c1\n1442345835\t11\n1442345836\t14\n1442345837\t19\n1442345838\t19\n1442345839\t16\n1442345840\t17\n1442345841\t17\n1442345842\t36\n1442345843\t18\n1442345844\t14\n1442345845\t9\n1442345846\t16\n1442345847\t11\n1442345848\t14\n1442345849\t20\n1442345850\t12\n1442345851\t23\n1442345852\t18\n1442345853\t15\n1442345854\t20\n1442345855\t15\n1442345856\t20\n1442345857\t9\n1442345858\t17\n1442345859\t24\n1442345860\t16\n1442345861\t15\n1442345862\t16\n1442345863\t11\n1442345864\t18\n1442345865\t13\n1442345866\t16\n1442345867\t15\n1442345868\t18\n1442345869\t17\n1442345870\t20\n1442345871\t13\n1442345872\t17\n1442345873\t12\n1442345874\t19\n1442345875\t20\n1442345876\t16\n1442345877\t18\n1442345878\t26\n1442345879\t19\n1442345880\t14\n1442345881\t18\n1442345882\t19\n1442345883\t19\n1442345884\t12\n1442345885\t13\n1442345886\t14\n1442345887\t20\n1442345888\t14\n1442345889\t14\n1442345890\t13\n1442345891\t12\n1442345892\t25\n1442345893\t20\n1442345894\t16\n1442345895\t21\n1442345896\t16\n1442345897\t19\n1442345898\t19\n1442345899\t14\n1442345900\t11\n1442345901\t13\n1442345902\t9\n1442345903\t18\n1442345904\t16\n1442345905\t25\n1442345906\t20\n1442345907\t18\n1442345908\t14\n1442345909\t16\n1442345910\t14\n1442345911\t22\n1442345912\t16\n1442345913\t13\n1442345914\t16\n1442345915\t23\n1442345916\t13\n1442345917\t9\n1442345918\t21\n1442345919\t16\n1442345920\t24\n1442345921\t19\n1442345922\t13\n1442345923\t13\n1442345924\t13\n1442345925\t15\n1442345926\t22\n1442345927\t19\n1442345928\t26\n1442345929\t19\n1442345930\t19\n1442345931\t18\n1442345932\t14\n1442345933\t9\n1442345934\t20\n1442345935\t10\n1442345936\t23\n1442345937\t16\n1442345938\t14\n1442345939\t23\n1442345940\t17\n1442345941\t22\n1442345942\t21\n1442345943\t13\n1442345944\t22\n1442345945\t19\n1442345946\t10\n1442345947\t21\n1442345948\t26\n1442345949\t16\n1442345950\t19\n1442345951\t17\n1442345952\t14\n1442345953\t22\n1442345954\t20\n1442345955\t17\n1442345956\t18\n1442345957\t18\n1442345958\t19\n1442345959\t22\n1442345960\t15\n1442345961\t12\n1442345962\t17\n1442345963\t10\n1442345964\t18\n1442345965\t18\n1442345966\t15\n1442345967\t20\n1442345968\t21\n1442345969\t11\n1442345970\t14\n1442345971\t28\n1442345972\t20\n1442345973\t13\n1442345974\t15\n1442345975\t23\n1442345976\t21\n1442345977\t17\n1442345978\t19\n1442345979\t15\n1442345980\t18\n1442345981\t25\n1442345982\t13\n1442345983\t23\n1442345984\t15\n1442345985\t12\n1442345986\t23\n1442345987\t16\n1442345988\t21\n1442345989\t16\n1442345990\t17\n1442345991\t21\n1442345992\t13\n1442345993\t15\n1442345994\t19\n1442345995\t22\n1442345996\t18\n1442345997\t17\n1442345998\t22\n1442345999\t17\n1442346000\t21\n1442346001\t20\n1442346002\t22\n1442346003\t22\n1442346004\t25\n1442346005\t16\n1442346006\t35\n1442346007\t29\n1442346008\t16\n1442346009\t12\n1442346010\t19\n1442346011\t21\n1442346012\t30\n1442346013\t13\n1442346014\t19\n1442346015\t19\n1442346016\t12\n1442346017\t22\n1442346018\t19\n1442346019\t23\n1442346020\t20\n1442346021\t22\n1442346022\t19\n1442346023\t17\n1442346024\t23\n1442346025\t26\n1442346026\t19\n1442346027\t27\n1442346028\t19\n1442346029\t15\n1442346030\t17\n1442346031\t16\n1442346032\t23\n1442346033\t16\n1442346034\t22\n1442346035\t23\n1442346036\t15\n1442346037\t18\n1442346038\t13\n1442346039\t15\n1442346040\t11\n1442346041\t20\n1442346042\t11\n1442346043\t20\n1442346044\t23\n1442346045\t19\n1442346046\t11\n1442346047\t14\n1442346048\t23\n1442346049\t16\n1442346050\t19\n1442346051\t17\n1442346052\t22\n1442346053\t13\n1442346054\t15\n1442346055\t15\n1442346056\t16\n1442346057\t23\n1442346058\t24\n1442346059\t25\n1442346060\t14\n1442346061\t20\n1442346062\t12\n1442346063\t14\n1442346064\t21\n1442346065\t24\n1442346066\t14\n1442346067\t31\n1442346068\t40\n1442346069\t13\n1442346070\t20\n1442346071\t14\n1442346072\t24\n1442346073\t28\n1442346074\t10\n1442346075\t17\n1442346076\t31\n1442346077\t19\n1442346078\t11\n1442346079\t20\n1442346080\t13\n1442346081\t12\n1442346082\t27\n1442346083\t17\n1442346084\t24\n1442346085\t23\n1442346086\t24\n1442346087\t16\n1442346088\t15\n1442346089\t23\n1442346090\t9\n1442346091\t18\n1442346092\t14\n1442346093\t22\n1442346094\t20\n1442346095\t21\n1442346096\t12\n1442346097\t15\n1442346098\t15\n1442346099\t12\n1442346100\t19\n1442346101\t19\n1442346102\t18\n1442346103\t19\n1442346104\t15\n1442346105\t13\n1442346106\t13\n1442346107\t29\n1442346108\t21\n1442346109\t16\n1442346110\t17\n1442346111\t17\n1442346112\t19\n1442346113\t11\n1442346114\t15\n1442346115\t18\n1442346116\t13\n1442346117\t17\n1442346118\t13\n1442346119\t15\n1442346120\t16\n1442346121\t15\n1442346122\t17\n1442346123\t17\n1442346124\t21\n1442346125\t19\n1442346126\t21\n1442346127\t20\n1442346128\t15\n1442346129\t24\n1442346130\t17\n1442346131\t14\n1442346132\t19\n1442346133\t14\n1442346134\t19\n1442346135\t2\n"
+        "msg": "createdAt\tretweets\n1442350835\t11\n1442350836\t19\n1442350837\t24\n1442350838\t17\n1442350839\t20\n1442350840\t16\n1442350841\t18\n1442350842\t30\n1442350843\t11\n1442350844\t14\n1442350845\t27\n1442350846\t16\n1442350847\t20\n1442350848\t18\n1442350849\t21\n1442350850\t22\n1442350851\t24\n1442350852\t11\n1442350853\t20\n1442350854\t12\n1442350855\t19\n1442350856\t20\n1442350857\t16\n1442350858\t14\n1442350859\t10\n1442350860\t6\n1442350861\t15\n1442350862\t15\n1442350863\t17\n1442350864\t20\n1442350865\t16\n1442350866\t16\n1442350867\t20\n1442350868\t14\n1442350869\t18\n1442350870\t21\n1442350871\t17\n1442350872\t18\n1442350873\t14\n1442350874\t15\n1442350875\t17\n1442350876\t17\n1442350877\t21\n1442350878\t16\n1442350879\t21\n1442350880\t21\n1442350881\t22\n1442350882\t16\n1442350883\t17\n1442350884\t23\n1442350885\t16\n1442350886\t16\n1442350887\t18\n1442350888\t20\n1442350889\t21\n1442350890\t19\n1442350891\t21\n1442350892\t11\n1442350893\t27\n1442350894\t18\n1442350895\t8\n1442350896\t19\n1442350897\t15\n1442350898\t25\n1442350899\t16\n1442350900\t12\n1442350901\t19\n1442350902\t23\n1442350903\t19\n1442350904\t27\n1442350905\t15\n1442350906\t20\n1442350907\t12\n1442350908\t11\n1442350909\t19\n1442350910\t10\n1442350911\t16\n1442350912\t18\n1442350913\t20\n1442350914\t10\n1442350915\t18\n1442350916\t19\n1442350917\t19\n1442350918\t11\n1442350919\t26\n1442350920\t19\n1442350921\t14\n1442350922\t19\n1442350923\t16\n1442350924\t19\n1442350925\t30\n1442350926\t18\n1442350927\t17\n1442350928\t19\n1442350929\t30\n1442350930\t21\n1442350931\t20\n1442350932\t16\n1442350933\t12\n1442350934\t22\n1442350935\t24\n1442350936\t13\n1442350937\t20\n1442350938\t19\n1442350939\t14\n1442350940\t31\n1442350941\t18\n1442350942\t20\n1442350943\t16\n1442350944\t16\n1442350945\t12\n1442350946\t14\n1442350947\t14\n1442350948\t20\n1442350949\t13\n1442350950\t25\n1442350951\t31\n1442350952\t17\n1442350953\t13\n1442350954\t18\n1442350955\t21\n1442350956\t19\n1442350957\t13\n1442350958\t21\n1442350959\t16\n1442350960\t22\n1442350961\t14\n1442350962\t26\n1442350963\t20\n1442350964\t17\n1442350965\t22\n1442350966\t20\n1442350967\t20\n1442350968\t19\n1442350969\t14\n1442350970\t12\n1442350971\t14\n1442350972\t19\n1442350973\t11\n1442350974\t12\n1442350975\t14\n1442350976\t16\n1442350977\t10\n1442350978\t22\n1442350979\t14\n1442350980\t24\n1442350981\t22\n1442350982\t27\n1442350983\t20\n1442350984\t23\n1442350985\t16\n1442350986\t31\n1442350987\t18\n1442350988\t15\n1442350989\t13\n1442350990\t11\n1442350991\t16\n1442350992\t18\n1442350993\t23\n1442350994\t15\n1442350995\t14\n1442350996\t21\n1442350997\t18\n1442350998\t15\n1442350999\t18\n1442351000\t15\n1442351001\t27\n1442351002\t23\n1442351003\t20\n1442351004\t25\n1442351005\t21\n1442351006\t18\n1442351007\t13\n1442351008\t23\n1442351009\t15\n1442351010\t19\n1442351011\t20\n1442351012\t16\n1442351013\t27\n1442351014\t15\n1442351015\t14\n1442351016\t24\n1442351017\t25\n1442351018\t22\n1442351019\t16\n1442351020\t10\n1442351021\t24\n1442351022\t22\n1442351023\t22\n1442351024\t16\n1442351025\t25\n1442351026\t14\n1442351027\t14\n1442351028\t23\n1442351029\t20\n1442351030\t16\n1442351031\t20\n1442351032\t17\n1442351033\t20\n1442351034\t24\n1442351035\t15\n1442351036\t20\n1442351037\t8\n1442351038\t18\n1442351039\t9\n1442351040\t17\n1442351041\t16\n1442351042\t17\n1442351043\t15\n1442351044\t17\n1442351045\t25\n1442351046\t17\n1442351047\t21\n1442351048\t17\n1442351049\t25\n1442351050\t15\n1442351051\t16\n1442351052\t26\n1442351053\t15\n1442351054\t26\n1442351055\t26\n1442351056\t13\n1442351057\t18\n1442351058\t26\n1442351059\t13\n1442351060\t24\n1442351061\t12\n1442351062\t16\n1442351063\t17\n1442351064\t8\n1442351065\t38\n1442351066\t17\n1442351067\t12\n1442351068\t24\n1442351069\t26\n1442351070\t17\n1442351071\t14\n1442351072\t17\n1442351073\t16\n1442351074\t21\n1442351075\t18\n1442351076\t14\n1442351077\t11\n1442351078\t19\n1442351079\t25\n1442351080\t20\n1442351081\t25\n1442351082\t25\n1442351083\t12\n1442351084\t20\n1442351085\t14\n1442351086\t22\n1442351087\t17\n1442351088\t20\n1442351089\t23\n1442351090\t12\n1442351091\t16\n1442351092\t20\n1442351093\t21\n1442351094\t14\n1442351095\t15\n1442351096\t14\n1442351097\t13\n1442351098\t18\n1442351099\t22\n1442351100\t24\n1442351101\t21\n1442351102\t21\n1442351103\t15\n1442351104\t8\n1442351105\t20\n1442351106\t15\n1442351107\t21\n1442351108\t19\n1442351109\t20\n1442351110\t21\n1442351111\t17\n1442351112\t27\n1442351113\t30\n1442351114\t19\n1442351115\t19\n1442351116\t18\n1442351117\t11\n1442351118\t22\n1442351119\t28\n1442351120\t14\n1442351121\t23\n1442351122\t22\n1442351123\t13\n1442351124\t19\n1442351125\t29\n1442351126\t10\n1442351127\t17\n1442351128\t26\n1442351129\t19\n1442351130\t18\n1442351131\t26\n1442351132\t20\n1442351133\t17\n1442351134\t23\n1442351135\t18\n1442351136\t20\n1442351137\t16\n1442351138\t16\n1442351139\t23\n1442351140\t16\n1442351141\t22\n1442351142\t23\n1442351143\t25\n1442351144\t12\n1442351145\t23\n1442351146\t26\n1442351147\t20\n1442351148\t19\n1442351149\t8\n1442351150\t10\n1442351151\t16\n1442351152\t19\n1442351153\t18\n1442351154\t17\n1442351155\t30\n1442351156\t15\n1442351157\t21\n1442351158\t19\n1442351159\t20\n1442351160\t20\n1442351161\t23\n1442351162\t20\n1442351163\t29\n1442351164\t17\n1442351165\t19\n1442351166\t26\n1442351167\t14\n1442351168\t20\n1442351169\t16\n1442351170\t20\n1442351171\t19\n1442351172\t19\n1442351173\t23\n1442351174\t14\n1442351175\t16\n1442351176\t30\n1442351177\t13\n1442351178\t14\n1442351179\t14\n1442351180\t17\n1442351181\t16\n1442351182\t17\n1442351183\t15\n1442351184\t17\n1442351185\t17\n1442351186\t20\n1442351187\t13\n1442351188\t17\n1442351189\t17\n1442351190\t21\n1442351191\t13\n1442351192\t21\n1442351193\t10\n1442351194\t20\n1442351195\t15\n1442351196\t14\n1442351197\t15\n1442351198\t15\n1442351199\t17\n1442351200\t20\n1442351201\t17\n1442351202\t28\n1442351203\t24\n1442351204\t19\n1442351205\t21\n1442351206\t22\n1442351207\t22\n1442351208\t18\n1442351209\t18\n1442351210\t23\n1442351211\t23\n1442351212\t24\n1442351213\t20\n1442351214\t28\n1442351215\t23\n1442351216\t24\n1442351217\t17\n1442351218\t19\n1442351219\t23\n1442351220\t13\n1442351221\t29\n1442351222\t24\n1442351223\t16\n1442351224\t36\n1442351225\t28\n1442351226\t23\n1442351227\t11\n1442351228\t22\n1442351229\t22\n1442351230\t21\n1442351231\t20\n1442351232\t22\n1442351233\t26\n1442351234\t24\n1442351235\t18\n1442351236\t21\n1442351237\t13\n1442351238\t20\n1442351239\t11\n1442351240\t24\n1442351241\t17\n1442351242\t17\n1442351243\t18\n1442351244\t13\n1442351245\t21\n1442351246\t26\n1442351247\t18\n1442351248\t16\n1442351249\t24\n1442351250\t15\n1442351251\t21\n1442351252\t12\n1442351253\t14\n1442351254\t20\n1442351255\t18\n1442351256\t21\n1442351257\t15\n1442351258\t16\n1442351259\t17\n1442351260\t18\n1442351261\t13\n1442351262\t15\n1442351263\t19\n1442351264\t14\n1442351265\t20\n1442351266\t13\n1442351267\t18\n1442351268\t14\n1442351269\t23\n1442351270\t15\n1442351271\t21\n1442351272\t19\n1442351273\t13\n1442351274\t17\n1442351275\t16\n1442351276\t18\n1442351277\t18\n1442351278\t14\n1442351279\t19\n1442351280\t16\n1442351281\t10\n1442351282\t15\n1442351283\t19\n1442351284\t16\n1442351285\t26\n1442351286\t25\n1442351287\t15\n1442351288\t12\n1442351289\t19\n1442351290\t11\n1442351291\t21\n1442351292\t12\n1442351293\t29\n1442351294\t14\n1442351295\t19\n1442351296\t24\n1442351297\t29\n1442351298\t20\n1442351299\t15\n1442351300\t15\n1442351301\t22\n1442351302\t24\n1442351303\t9\n1442351304\t15\n1442351305\t19\n1442351306\t12\n1442351307\t10\n1442351308\t19\n1442351309\t16\n1442351310\t13\n1442351311\t24\n1442351312\t34\n1442351313\t11\n1442351314\t24\n1442351315\t20\n1442351316\t15\n1442351317\t14\n1442351318\t20\n1442351319\t22\n1442351320\t11\n1442351321\t14\n1442351322\t22\n1442351323\t22\n1442351324\t18\n1442351325\t15\n1442351326\t19\n1442351327\t20\n1442351328\t16\n1442351329\t16\n1442351330\t7\n1442351331\t20\n1442351332\t19\n1442351333\t26\n1442351334\t34\n1442351335\t12\n1442351336\t17\n1442351337\t21\n1442351338\t18\n1442351339\t16\n1442351340\t25\n1442351341\t14\n1442351342\t21\n1442351343\t12\n1442351344\t20\n1442351345\t13\n1442351346\t21\n1442351347\t18\n1442351348\t15\n1442351349\t18\n1442351350\t23\n1442351351\t10\n1442351352\t18\n1442351353\t30\n1442351354\t16\n1442351355\t24\n1442351356\t20\n1442351357\t21\n1442351358\t17\n1442351359\t20\n1442351360\t15\n1442351361\t17\n1442351362\t19\n1442351363\t22\n1442351364\t19\n1442351365\t16\n1442351366\t15\n1442351367\t21\n1442351368\t24\n1442351369\t18\n1442351370\t14\n1442351371\t15\n1442351372\t11\n1442351373\t15\n1442351374\t18\n1442351375\t16\n1442351376\t20\n1442351377\t10\n1442351378\t20\n1442351379\t20\n1442351380\t20\n1442351381\t21\n1442351382\t16\n1442351383\t15\n1442351384\t17\n1442351385\t18\n1442351386\t16\n1442351387\t29\n1442351388\t20\n1442351389\t14\n1442351390\t14\n1442351391\t18\n1442351392\t17\n1442351393\t17\n1442351394\t14\n1442351395\t17\n1442351396\t17\n1442351397\t18\n1442351398\t16\n1442351399\t28\n1442351400\t17\n1442351401\t19\n1442351402\t22\n1442351403\t26\n1442351404\t25\n1442351405\t16\n1442351406\t18\n1442351407\t26\n1442351408\t24\n1442351409\t18\n1442351410\t15\n1442351411\t31\n1442351412\t23\n1442351413\t11\n1442351414\t20\n1442351415\t22\n1442351416\t23\n1442351417\t19\n1442351418\t16\n1442351419\t17\n1442351420\t17\n1442351421\t15\n1442351422\t22\n1442351423\t24\n1442351424\t19\n1442351425\t12\n1442351426\t17\n1442351427\t16\n1442351428\t14\n1442351429\t21\n1442351430\t19\n1442351431\t18\n1442351432\t19\n1442351433\t26\n1442351434\t19\n1442351435\t7\n"
       },
       "dateCreated": "Sep 15, 2015 5:45:57 PM",
-      "dateStarted": "Sep 15, 2015 7:42:16 PM",
-      "dateFinished": "Sep 15, 2015 7:42:39 PM",
+      "dateStarted": "Sep 15, 2015 9:10:36 PM",
+      "dateFinished": "Sep 15, 2015 9:11:21 PM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },

@@ -1,0 +1,131 @@
+%dep
+z.load("org.apache.spark:spark-streaming-twitter_2.10:1.5.0")
+z.load("org.twitter4j:twitter4j-core:3.0.3")
+z.load("org.twitter4j:twitter4j-media-support:3.0.3")
+z.load("org.twitter4j:twitter4j-async:3.0.3")
+z.load("org.twitter4j:twitter4j-examples:3.0.3")
+z.load("org.twitter4j:twitter4j-stream:3.0.3")
+
+
+
+
+import org.apache.spark.streaming._
+import org.apache.spark.streaming.twitter._
+import org.apache.spark.storage.StorageLevel
+import scala.io.Source
+import scala.collection.mutable.HashMap
+import java.io.File
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
+import sys.process.stringSeqToProcess
+
+def configureTwitterCredentials(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String) {
+  val configs = new HashMap[String, String] ++= Seq(
+    "apiKey" -> apiKey, "apiSecret" -> apiSecret, "accessToken" -> accessToken, "accessTokenSecret" -> accessTokenSecret)
+  println("Configuring Twitter OAuth")
+  configs.foreach{ case(key, value) =>
+    if (value.trim.isEmpty) {
+      throw new Exception("Error setting authentication - value for " + key + " not set")
+    }
+    val fullKey = "twitter4j.oauth." + key.replace("api", "consumer")
+    System.setProperty(fullKey, value.trim)
+    println("\tProperty " + fullKey + " set as [" + value.trim + "]")
+  }
+  println()
+}
+
+val apiKey = "8i2ZrUPfoG1ZnU2uuyvcZdV7i"
+val apiSecret = "iBPRby7ODZucGivsmnaPRWHFx0J3kPd4uQrpwWbRiHNPZfrRbk"
+val accessToken = "28580845-8z90p66gKcgyP79NR1MzcJ7ZaLVVH2gpMwWCQaWHl"
+val accessTokenSecret = "drdM8I28P91GdQ5TkXFPSaEIom9I8FLZ8VlnHfTdHO3tB"
+configureTwitterCredentials(apiKey, apiSecret, accessToken, accessTokenSecret)
+
+import org.apache.spark.streaming.twitter._
+val ssc = new StreamingContext(sc, Seconds(2))
+val tweets = TwitterUtils.createStream(ssc, None)
+val twt = tweets.window(Seconds(600))
+
+case class Tweet(createdAt:Long, text:String, username:String, followersCount:Int, profileBGColor:String)
+twt.map(status=>
+  Tweet(status.getCreatedAt().getTime()/1000, status.getText(), status.getUser().getName(), status.getUser().getFollowersCount(), status.getUser().getProfileBackgroundColor())
+).foreachRDD(rdd=>
+  rdd.toDF().registerTempTable("tweets")
+)
+
+ssc.start()
+
+
+
+
+def sentiment(s:String) : String = {
+    val positive = Array("like", "love", "good", "great", "happy", "cool", "want", "rocks", "smart", "yes", "best", "awesome", "sweet", "rad", "winner", "win", "ideal", "wonderful", "fantastic")
+    val negative = Array("hate", "bad", "stupid", "kill", "evil", "dumb", "idiot", "sucks", "worst", "horrible", "fail", "lousy", "poor", "broken", "pain", "stink", "lose", "loser")
+
+    var st = 0;
+    val words = s.split(" ")    
+    positive.foreach(p =>
+        words.foreach(w =>
+            if(p==w) st = st+1
+        )
+    )
+    negative.foreach(p=>
+        words.foreach(w=>
+            if(p==w) st = st-1
+        )
+    )
+    if(st>0)
+        "positivie"
+    else if(st<0)
+        "negative"
+    else
+        "neutral"
+}
+sqlc.udf.register("sentiment", sentiment _)
+
+
+
+%sql select count(*) Total_tweets from tweets
+
+
+%sql select text from tweets where upper(text) like upper('%Trump%') limit 20
+
+
+
+sqlContext.sql("select text from tweets where upper(text) like upper('%Obama%') limit 20").take(20).mkString("\n")
+
+
+
+
+%sql select  sentiment(text), count(1)
+from tweets 
+where upper(text) like upper('%${Search=Trump}%') group by sentiment(text)
+
+
+
+%sql select createdAt, count(1) retweets from tweets  where text like 'RT%' group by createdAt order by createdAt
+
+
+%sql
+select sum(followersCount), profileBGColor 
+from tweets 
+where upper(text) like upper('%${Search=Trump}%')
+group by profileBGColor
+order by sum(followersCount) DESC
+
+
+
+
+
+ssc.stop()
+
+
+
+
+
+
+
+
+%sql
+select *
+from tweets
+
